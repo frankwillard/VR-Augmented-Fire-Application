@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    
+    <meta charset="UTF-8">
+    
+    <!-- Libraries & JavaScript Components (Call order matters) -->
+    <script src="https://aframe.io/releases/0.9.2/aframe.min.js"></script>  <!--Needs to be on A-Frame 0.9.2 for graph to load [MSH-update to latest version someday...]-->
+    <script src="aframe-immersive-video-component.js"></script>
+    <script src="a-frame-material.js"></script>  <!-- A-Frame Material Kit -->
+    <script src="https://d3js.org/d3.v3.min.js"></script>  <!-- D3 Script Library-->
+    <script src="aabb-collider.js"></script>
+    <script src="grab.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-extras/v4.1.2/dist/aframe-extras.min.js"></script>
+    <script src="https://unpkg.com/super-hands@3.0.0/dist/super-hands.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@^4.0.0/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+    <script src="https://rawgit.com/mayognaise/aframe-mouse-cursor-component/master/dist/aframe-mouse-cursor-component.min.js"></script>
+    <script src="https://supereggbert.github.io/aframe-htmlembed-component/dist/build.js"></script>
+    <script src="change-color-on-hover.js"></script>
+    <script src="graphs.js" defer></script>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <script src="numerical-display.js"></script>  <!-- Changes numerical temperature on time interval -->
+    <script src="startnumbers.js"></script>  <!-- Initlal conditions -->
+    <script src="follow.js"></script>
+    <script src="zoomthatwheel.js"></script>
+    <script src="parse.js"></script>
+    
+    <script>
+      
+      // dataset specific variables used in graphs.js and numerical-display.js
+      var timeoffset = 0;    // video to dataset offset time (e.g. PRICE has 9 s buffer for title screen; adjusted from Frankie's 7 s)
+      var timeend = 479;     // dataset end time  (e.g. row 1061 for PRICE; 393 s + 27 s pre-igntion + 9 s offset)
+    
+      //Auto generate allPrefix and cnames
+      var allPrefix = names.slice();
+        allPrefix.shift();
+        var cnames = [];
+        for(var i = 0; i < allPrefix.length; i++)
+        {
+          cnames[i] = "my" + allPrefix[i] + "SVG";
+        }
+      
+    </script>
+    
+  </head>
+  
+
+  <body>
+    
+    <a-scene cursor="rayOrigin: mouse" forcursorscrollbar time startnumbers >
+      
+      <!-- User instructions -->
+      <a-entity  id="UserInstructions" position="-5.0 -3.7 -8" >
+        
+        <a-rounded id="InstructionFrame" position="0 .2 -0.01" width="10.5" height="4.8" radius="1.0" scale="1 1 1" opacity="0.5" color="#0066ff"></a-rounded>
+        
+        <a-text id="InstructionText"  
+              position="0.5 2.6 0" font="kelsonsans" wrap-count= "70" width="10" anchor = "left"
+              value="This is a data-augmented 360-degree video. Sensor locations where data were measured are indicated by (pink) spheres.\n
+                      * \t Use the pointer (right hand) to start/stop the video and to plot data by pointing at a sphere and pulling the trigger.\n
+                      * \t Use your virutal hand (left hand) to grab the boxes to reposition graphs.\n
+                      
+                      WEB BROWSER (no hand controllers)
+                      Use mouse left-click-and-drag to rotate video, 'hover' for video controls, right-click to select, and scroll to magnify the video." >
+        </a-text>
+        
+        <a-entity position="8.5 0.68 0.01"  > 
+          <a-plane id="Closebox" 
+                    position="0 0 0" 
+                    width="1.5" height="0.5"  color="grey" opacity="1.0"
+                    onclick="toggleVisibility('#InstructionFrame'), toggleVisibility('#InstructionText'), toggleVisibility('#Closebox'), toggleVisibility('#CloseText')"></a-plane>
+          <a-text id="CloseText" position=" 0 0 0.02" font="kelsonsans" width="8" align = "center" value="Close" ></a-text>
+        </a-entity> 
+   
+      </a-entity> <!-- end instructions -->
+      
+      
+      <!-- make hotspotGrabbable-->
+      <a-entity id="lhand" hand-controls="left" aabb-collider="objects: .boxGrabbable, .hotspotGrabbable;"  grab></a-entity>
+      
+      
+      <!-- Hotspot group -->
+        
+        <!-- Sensor hotspot (spheres) names-->
+        <a-entity  position="1 1.5 0"  > 
+              <a-text  id="s1name"  follow="target: #s1; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Ceiling temperture" ></a-text> 
+              <a-text  id="s2name"  follow="target: #s2; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Floor temperature" ></a-text> 
+              <a-text  id="s3name"  follow="target: #s3; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Heat flux 1" ></a-text> 
+              <a-text  id="s4name"  follow="target: #s4; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Heat flux 2"  ></a-text>
+              <a-text  id="s5name"  follow="target: #s5; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Heat flux 3"  ></a-text>
+              <a-text  id="s6name"  follow="target: #s6; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Heat flux 4"  visible="false" ></a-text>
+              <a-text  id="s7name"  follow="target: #s7; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="Heat flux 5"  visible="false" ></a-text>  
+              <a-text  id="s9name"  follow="target: #s8; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="CO2 room"  ></a-text>
+        </a-entity>
+    
+        <a-entity  position="1 7.5 0"  > 
+              <a-text  id="s8name"  follow="target: #s8; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="O2 room"  ></a-text> 
+        </a-entity>
+        <a-entity  position="1 -4.5 0"  > 
+              <a-text  id="s10name" follow="target: #s8; speed: 10" scale= "10 10" rotation="0 0 0"  color="FloralWhite"   value="CO room"  ></a-text> 
+        </a-entity>
+
+      
+        <!-- Sensor hotspot (spheres) numerical values -->
+        <a-entity  position="1 -1.5 0" > 
+              <a-text  id="s1val"   follow="target: #s1; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>
+              <a-text  id="s2val"   follow="target: #s2; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>
+              <a-text  id="s3val"   follow="target: #s3; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>
+              <a-text  id="s4val"   follow="target: #s4; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>
+              <a-text  id="s5val"   follow="target: #s5; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>
+              <a-text  id="s6val"   follow="target: #s6; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" ></a-text>
+              <a-text  id="s7val"   follow="target: #s7; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" ></a-text>  
+              <a-text  id="s9val"   follow="target: #s8; speed: 10" scale= "10 10"  rotation="0 0 0" color="red"  ></a-text>  
+        </a-entity>
+      
+        <a-entity  position="1 4.5 0" > 
+              <a-text  id="s8val"   follow="target: #s8; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  ></a-text>  
+        </a-entity>
+        <a-entity  position="1 -7.5 0" > 
+              <a-text  id="s10val"   follow="target: #s8; speed: 10" scale= "10 10"  rotation="0 0 0" color="green"  ></a-text>  
+        </a-entity>
+      
+        <!--text when numerical values at hotspots are toggled to graphs -->
+        <a-entity  position="1 -1.5 0" > 
+              <a-text  id="s1toggletext"  follow="target: #s1; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph" ></a-text>
+              <a-text  id="s2toggletext"  follow="target: #s2; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>
+              <a-text  id="s3toggletext"  follow="target: #s3; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>
+              <a-text  id="s4toggletext"  follow="target: #s4; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>
+              <a-text  id="s5toggletext"  follow="target: #s5; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>
+              <a-text  id="s6toggletext"  follow="target: #s6; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>
+              <a-text  id="s7toggletext"  follow="target: #s7; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text>  
+        </a-entity>
+       
+        <a-entity  position="1 4.5 0" > 
+              <a-text  id="s8toggletext"  follow="target: #s8; speed: 10" scale= "10 10"  rotation="0 0 0" color="yellow"  visible="false" value="See graph"></a-text> 
+        </a-entity>
+      
+      
+        <!--Sensor shadow hotspot (box) names-->
+        <a-entity  position=".04 0 0"  > 
+              <a-text  id="s1shadowname"  follow="target: #s1shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Ceiling temperture"  ></a-text>
+              <a-text  id="s2shadowname"  follow="target: #s2shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Floor temperature"  ></a-text>
+              <a-text  id="s3shadowname"  follow="target: #s3shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Heat flux 1"  ></a-text>
+              <a-text  id="s4shadowname"  follow="target: #s4shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Heat flux 2"  ></a-text>   
+              <a-text  id="s5shadowname"  follow="target: #s5shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Heat flux 3"  ></a-text>
+              <a-text  id="s6shadowname"  follow="target: #s6shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Heat flux 4"  ></a-text>
+              <a-text  id="s7shadowname"  follow="target: #s7shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="Heat flux 5"  ></a-text>
+              <a-text  id="s8shadowname"  follow="target: #s8shadow; speed: 10" scale= "0.2 0.2"  color="FloralWhite"   value="O2, C02, CO room"  ></a-text>
+
+        </a-entity>
+
+        <!-- Sensor shadow hotspot (box) numerical values -->
+        <a-entity  position=".04 -.05 0" > 
+              <a-text  id="s1shadowval"  follow="target: #s1shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s2shadowval"  follow="target: #s2shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s3shadowval"  follow="target: #s3shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s4shadowval"  follow="target: #s4shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>   
+              <a-text  id="s5shadowval"  follow="target: #s5shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s6shadowval"  follow="target: #s6shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s7shadowval"  follow="target: #s7shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+              <a-text  id="s8shadowval"  follow="target: #s8shadow; speed: 10" scale= "0.2 0.2"  color="yellow"   ></a-text>
+        </a-entity>
+          
+        <a-entity  position=".04 -.10 0" > 
+              <a-text  id="s9shadowval"  follow="target: #s8shadow; speed: 10" scale= "0.2 0.2"  color="red"   ></a-text>
+        </a-entity>
+        <a-entity  position=".04 -.15" > 
+              <a-text  id="s10shadowval"  follow="target: #s8shadow; speed: 10" scale= "0.2 0.2"  color="green"   ></a-text>
+        </a-entity>
+
+      
+        <!-- Sensor shadow hotspot (box) graphs-->
+        <a-entity position=".2 -.15 0">
+              <a-entity  id="s1graph"  follow="target: #s1shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s2graph"  follow="target: #s2shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s3graph"  follow="target: #s3shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s4graph"  follow="target: #s4shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s5graph"  follow="target: #s5shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s6graph"  follow="target: #s6shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s7graph"  follow="target: #s7shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+              <a-entity  id="s8graph"  follow="target: #s8shadow; speed: 10" htmlembed scale="0.2 0.2"  ></a-entity>
+        </a-entity> 
+ 
+          
+        <!-- Sensor hotspot definitions (spheres)-->
+           <a-entity id="s1">
+             <a-sphere    class="hotspotGrabbable" mixin="hotspotGrabbable" 
+                          change-color-on-hover="color: forestgreen"
+                          position="18 65 -59"  radius="1.2"  color="#EF2D5E"
+                          onclick="toggleVisibility('#s1val'),  toggleVisibility('#s1toggletext'), toggleVisibility('#s1shadow'), toggleVisibility('#s1shadowname'), toggleVisibility('#s1shadowval'), toggleVisibility('#s1graph'),  graphsToDisplay[1] = 1">
+             </a-sphere>
+            </a-entity>
+        
+            <a-entity id="s2">
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="-60 -43 -54"  radius="1.2" color="#EF2D5E"
+                          onclick="toggleVisibility('#s2val'),  toggleVisibility('#s2toggletext'), toggleVisibility('#s2shadow'), toggleVisibility('#s2shadowname'), toggleVisibility('#s2shadowval'), toggleVisibility('#s2graph'), graphsToDisplay[2] = 2">
+              </a-sphere>
+            </a-entity>
+       
+            <a-entity id="s3">
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="-60 -44 -49"  radius="1.2" color="#EF2D5E"
+                          onclick="toggleVisibility('#s3val'),  toggleVisibility('#s3toggletext'), toggleVisibility('#s3shadow'), toggleVisibility('#s3shadowname'), toggleVisibility('#s3shadowval'), toggleVisibility('#s3graph'), graphsToDisplay[3] = 3">
+              </a-sphere>
+            </a-entity>
+        
+            <a-entity id="s4">
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="-65 15 -57"  radius="1.2" color="#EF2D5E"
+                          onclick="toggleVisibility('#s4val'),  toggleVisibility('#s4toggletext'), toggleVisibility('#s4shadow'), toggleVisibility('#s4shadowname'), toggleVisibility('#s4shadowval'), toggleVisibility('#s4graph'), graphsToDisplay[4] = 4">
+              </a-sphere>
+            </a-entity>
+        
+            <a-entity id="s5">
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="-55 61 -44" radius="1.2" color="#EF2D5E"
+                          onclick="toggleVisibility('#s5val'),  toggleVisibility('#s5toggletext'), toggleVisibility('#s5shadow'), toggleVisibility('#s5shadowname'), toggleVisibility('#s5shadowval'), toggleVisibility('#s5graph'), graphsToDisplay[5] = 5">
+              </a-sphere>
+            </a-entity>        
+                
+            <a-entity id="s6" >
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="24 -13 -90" radius="1.2" color="#EF2D5E"
+                          visible="false"
+                          onclick="toggleVisibility('#s6val'),  toggleVisibility('#s6toggletext'), toggleVisibility('#s6shadow'), toggleVisibility('#s6shadowname'), toggleVisibility('#s6shadowval'), toggleVisibility('#s6graph'), graphsToDisplay[6] = 6">
+              </a-sphere>
+            </a-entity>
+        
+            <a-entity id="s7" >
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="-31 -19 -90" radius="1.2" color="#EF2D5E"
+                          visible="false"
+                          onclick="toggleVisibility('#s7val'),  toggleVisibility('#s7toggletext'), toggleVisibility('#s7shadow'), toggleVisibility('#s7shadowname'), toggleVisibility('#s7shadowval'), toggleVisibility('#s7graph'), graphsToDisplay[7] = 7">
+              </a-sphere>
+            </a-entity>
+        
+           <!-- data for "s9" and "s10" are attaced to this hotspot -->
+            <a-entity id="s8" > 
+              <a-sphere   class="hotspotGrabbable" mixin="hotspotGrabbable"
+                          change-color-on-hover="color: forestgreen"
+                          position="19 33 -80" radius="1.2" color="#EF2D5E"
+                          onclick="toggleVisibility('#s8val'),  toggleVisibility('#s8toggletext'), toggleVisibility('#s8shadow'), toggleVisibility('#s8shadowname'), toggleVisibility('#s8shadowval'), toggleVisibility('#s8graph'), graphsToDisplay[8] = 8, toggleVisibility('#s9val'), toggleVisibility('#s10val'), toggleVisibility('#s9shadowval'), toggleVisibility('#s10shadowval')">
+              </a-sphere>
+                      
+        
+          <!-- Graph hotspot definitions (boxes) -->        
+           <a-entity id="s1shadow">
+             <a-box  class="boxGrabbable" mixin="boxGrabbable " 
+                      position="-0.8 0.4 -0.4"   depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s1shadow'), toggleVisibility('#s1shadowname'), toggleVisibility('#s1shadowval'), toggleVisibility('#s1graph'), toggleVisibility('#s1toggletext'), toggleVisibility('#s1val')"> 
+             </a-box>
+           </a-entity>
+        
+          <a-entity id="s2shadow">
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 0.72 -0.5"   depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s2shadow'), toggleVisibility('#s2shadowname'), toggleVisibility('#s2shadowval'), toggleVisibility('#s2graph'), toggleVisibility('#s2toggletext'), toggleVisibility('#s2val')"> 
+              </a-box>
+          </a-entity>
+        
+          <a-entity id="s3shadow">
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 0.85 -0.6"   depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s3shadow'), toggleVisibility('#s3shadowname'), toggleVisibility('#s3shadowval'), toggleVisibility('#s3graph'), toggleVisibility('#s3toggletext'), toggleVisibility('#s3val')">
+              </a-box>
+          </a-entity>
+        
+          <a-entity id="s4shadow">
+              <a-box  class="boxGrabbable" mixin="boxGrabbable " 
+                      position="-0.8 0.95 -0.7"   depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                     onclick="toggleVisibility('#s4shadow'), toggleVisibility('#s4shadowname'), toggleVisibility('#s4shadowval'), toggleVisibility('#s4graph'), toggleVisibility('#s4toggletext'), toggleVisibility('#s4val')"> 
+              </a-box>
+          </a-entity>
+        
+         <a-entity id="s5shadow">
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 1.03 -0.8"   depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s5shadow'), toggleVisibility('#s5shadowname'), toggleVisibility('#s5shadowval'), toggleVisibility('#s5graph'), toggleVisibility('#s5toggletext'), toggleVisibility('#s5val')">
+              </a-box>
+          </a-entity>
+       
+         <a-entity id="s6shadow"  >
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 1.11 -0.9" depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s6shadow'), toggleVisibility('#s6shadowname'), toggleVisibility('#s6shadowval'), toggleVisibility('#s6graph'), toggleVisibility('#s6toggletext'), toggleVisibility('#s6val')">
+              </a-box>
+          </a-entity>
+                      
+         <a-entity id="s7shadow"  >
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 1.17 1.0" depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s7shadow'), toggleVisibility('#s7shadowname'), toggleVisibility('#s7shadowval'), toggleVisibility('#s7graph'), toggleVisibility('#s7toggletext'), toggleVisibility('#s7val')">
+              </a-box>
+          </a-entity>
+          
+          <!-- data for "s9" and "s10" are attached to this graph -->
+          <a-entity id="s8shadow"  >
+              <a-box  class="boxGrabbable" mixin="boxGrabbable "
+                      position="-0.8 1.24 -1.1" depth=".1" width=".1" height=".1" scale="0.5 0.5 0.5" color="#EF2D5E"
+                      change-color-on-hover="color: orange"
+                      onclick="toggleVisibility('#s8shadow'), toggleVisibility('#s8shadowname'), toggleVisibility('#s8shadowval'), toggleVisibility('#s8graph'), toggleVisibility('#s8toggletext'), toggleVisibility('#s8val'), toggleVisibility('#s9val'), toggleVisibility('#s10val'), toggleVisibility('#s9shadowval'), toggleVisibility('#s10shadowval')">
+              </a-box>
+          </a-entity>
+          
+                      
+      </a-entity> <!--end hotspot group -->
+      
+      
+    <!-- Heat Release Rate Numerical Display these entities are here in file after the other entities to prevent it blocking 
+    other spheres from view the order of display matters also the laser selector is not blocked as much -->
+      <a-entity id="hrrgroup" position="0.6 0.7 -1.0">
+        <a-entity id="reset"  position="-.21 .15 0">
+          <a-box class="boxGrabbable" mixin="boxGrabbable" 
+                 id="spreset"
+                 scale="0.5 0.5 0.5" depth=".1" width=".1" height=".1" color="aqua" >
+          </a-box>
+        </a-entity>
+            
+        <a-entity  position="-0.16 .15 0" >
+          <a-text follow="target: #reset; speed: #10"  id="hrrtext" color="floralwhite" value="Heat Release Rate" scale="0.2 0.2 0.2" ></a-text>
+        </a-entity> 
+        
+        <a-entity  position="-0.16 0.10 0" >
+          <a-text follow="target: #reset; speed: 10" id="hrrval" color="yellow" value="" scale="0.2 0.2 0.2" visible="true"></a-text>
+        </a-entity>
+        
+        <a-entity  position="0 0 0" > 
+          <a-entity follow="target: #reset; speed: 10" id="hrrgraph" htmlembed scale="0.2 0.2" visible="true"  ></a-entity> 
+        </a-entity>          
+        
+      </a-entity> <!-- end hrrgroup -->
+    
+      
+      <!-- This 'Mixin' for manipulating hotspots (spheres) and shadows (boxes) -->
+      <a-mixin id="hotspotGrabbable"
+               hoverable grabbable  draggable droppable 
+               event-set__hit="material.color: #FF0000"
+               event-set__hitend="material.color: #0000FF">
+      </a-mixin>
+      
+      <a-mixin id="boxGrabbable"  
+               hoverable grabbable  draggable droppable 
+               event-set__hit="material.color: #00FF00"
+               event-set__hitend="material.color: aqua" >
+      </a-mixin>
+      
+      <!-- adds mouse control for grab and move -->
+      <a-entity camera wasd-controls position="0 1 1"
+                capture-mouse
+                raycaster="objects: .boxGrabbable" cursor="rayOrigin:mouse" 
+                super-hands="colliderEvent: raycaster-intersection;
+                             colliderEventProperty: els;
+                             colliderEndEvent:raycaster-intersection-cleared;
+                             colliderEndEventProperty: clearedEls;">
+      </a-entity>
+            
+      <!-- Rotate videosphere around Y-axis to align with video orientation. Approx. -90 deg for PRICE ; Y = vertical (right hand rule) -->
+
+      <!-- remote hosted version --> 
+      <a-entity id="imvideo" position="2 1 0" immersive-video="type: 360_mono; source:https://nist-el-nfrlhrr.s3.amazonaws.com/VR360/RoomTest3_ForDataOverlay_1280x640_360.mp4" rotation="0 -90 0"  loop   crossorigin="anonymous"  playsinline webkit-playsinline></a-entity> 
+<!-- other versions
+      <a-entity id="imvideo" position="2 1 0" immersive-video="type: 360_mono; source:https://nist-el-nfrlhrr.s3.amazonaws.com/VR360/RoomTest3_ForDataOverlay_854x427_360.mp4" rotation="0 -90 0"  loop   crossorigin="anonymous"  playsinline webkit-playsinline></a-entity> 
+      <a-entity id="imvideo" position="2 1 0" immersive-video="type: 360_mono; source:https://nist-el-nfrlhrr.s3.amazonaws.com/VR360/RoomTest3_ForDataOverlay_1280x640_360.mp4" rotation="0 -90 0"  loop   crossorigin="anonymous"  playsinline webkit-playsinline></a-entity>       
+      <a-entity id="imvideo" position="2 1 0" immersive-video="type: 360_mono; source:https://nist-el-nfrlhrr.s3.amazonaws.com/VR360/RoomTest3_ForDataOverlay_4096x2048_360.mp4" rotation="0 -90 0"  loop   crossorigin="anonymous"  playsinline webkit-playsinline></a-entity> 
+--> 
+      
+      <!-- Define camera with zero user height, movement disabled and arrow key rotation added. -->
+      <!-- Mouse into cursor should be: look-controls="pointerLockEnabled:true;"-->
+      <a-camera id="cam" user-height="0" wasd-controls-enabled="false" arrow-key-rotation="true" look-controls mouse-cursor >
+      </a-camera>
+    
+    </a-scene>
+   
+  </body>
+</html>

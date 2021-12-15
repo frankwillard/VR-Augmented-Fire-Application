@@ -1,0 +1,109 @@
+// Numerical display function and binary search function
+
+//MSH (replaced by fucntion makeArr)) 
+//Array of times from csv (columns 641-1061)
+//-27 seconds to 393 in video (added 34 to make it sync with vid.currenttime)
+//var timearr = [6.999999,7.999999,8.999999,9.999999,10.999999,11.999999,12.999999,13.999999,14.999999,15.999999,16.999998,17.999998,18.999998,19.999998,20.999998,21.999998,22.999998,23.999998,24.999998,25.999997,26.999997,27.999997,28.999997,29.999997,3.10E+01,31.999997,32.999997,3.40E+01,34.999997,35.999996,36.999996,37.999996,38.999996,39.999996,40.999996,41.999996,42.999996,43.999996,44.999995,45.999995,46.999995,47.999995,48.999995,49.999995,50.999995,51.999995,52.999995,53.999995,54.999994,55.999994,56.999994,57.999994,58.999994,59.999994,60.999994,61.999994,62.999994,63.999993,64.999993,65.999993,66.999993,67.999993,68.999993,69.999993,70.999993,71.999993,72.999993,73.999992,74.999992,75.999992,76.999992,77.999992,78.999992,79.999992,80.999992,81.999992,82.999991,83.999991,84.999991,85.999991,86.999991,87.999991,88.999991,89.999991,90.999991,91.999991,92.999991,93.999991,94.999991,95.999991,96.999991,97.99999,98.99999,99.99999,100.99999,101.99999,102.99999,103.99999,104.99999,105.99999,106.999989,107.999989,108.999989,109.999989,110.999989,111.999989,112.999989,113.999989,114.999989,115.999989,116.999988,117.999988,118.999988,119.999988,120.999988,121.999988,122.999988,123.999988,124.999988,125.999987,126.999987,127.999987,128.999987,129.999987,130.999987,131.999987,132.999987,133.999987,134.999987,135.999986,136.999986,137.999986,138.999986,139.999986,140.999986,141.999986,142.999986,143.999986,144.999985,145.999985,146.999985,147.999985,148.999985,149.999985,150.999985,151.999985,152.999985,153.999985,154.999984,155.999984,156.999984,157.999984,158.999984,159.999984,160.999984,161.999984,162.999984,163.999984,164.999983,165.999983,166.999983,167.999983,168.999983,169.999983,170.999983,171.999983,172.999983,173.999982,174.999982,175.999982,176.999982,177.999982,178.999982,179.999982,180.999982,181.999982,182.999982,183.999981,184.999981,185.999981,186.999981,187.999981,188.999981,189.999981,190.999981,191.999981,192.999981,193.999981,194.999981,195.999981,196.999981,197.99998,198.99998,199.99998,200.99998,201.99998,202.99998,203.99998,204.99998,205.99998,206.999979,207.999979,208.999979,209.999979,210.999979,211.999979,212.999979,213.999979,214.999979,215.999979,216.999978,217.999978,218.999978,219.999978,220.999978,221.999978,222.999978,223.999978,224.999978,225.999978,226.999977,227.999977,228.999977,229.999977,230.999977,231.999977,232.999977,233.999977,234.999977,235.999976,236.999976,237.999976,238.999976,239.999976,240.999976,241.999976,242.999976,243.999976,244.999976,245.999975,246.999975,247.999975,248.999975,249.999975,250.999975,251.999975,252.999975,253.999975,254.999974,255.999974,256.999974,257.999974,258.999974,259.999974,260.999974,261.999974,262.999974,263.999974,264.999973,265.999973,266.999973,267.999973,268.999973,269.999973,270.999973,271.999973,272.999973,273.999972,274.999972,275.999972,276.999972,277.999972,278.999972,279.999972,280.999972,281.999972,282.999972,283.999971,284.999971,285.999971,286.999971,287.999971,288.999971,289.999971,290.999971,291.999971,292.99997,293.99997,294.99997,295.99997,296.99997,297.99997,298.99997,299.99997,300.99997,301.99997,302.99997,303.99997,304.99997,305.99997,306.99997,307.999969,308.999969,309.999969,310.999969,311.999969,312.999969,313.999969,314.999969,315.999969,316.999968,317.999968,318.999968,319.999968,320.999968,321.999968,322.999968,323.999968,324.999968,325.999968,326.999967,327.999967,328.999967,329.999967,330.999967,331.999967,332.999967,333.999967,334.999967,335.999966,336.999966,337.999966,338.999966,339.999966,340.999966,341.999966,342.999966,343.999966,344.999966,345.999965,346.999965,347.999965,348.999965,349.999965,350.999965,351.999965,352.999965,353.999965,354.999964,355.999964,356.999964,357.999964,358.999964,359.999964,360.999964,361.999964,362.999964,363.999964,364.999963,365.999963,366.999963,367.999963,368.999963,369.999963,370.999963,371.999963,372.999963,373.999962,374.999962,375.999962,376.999962,377.999962,378.999962,379.999962,380.999962,381.999962,382.999962,383.999961,384.999961,385.999961,386.999961,387.999961,388.999961,389.999961,390.999961,391.999961,392.99996,393.99996,394.99996,395.99996,396.99996,397.99996,398.99996,399.99996,400.99996,401.99996,402.99996,403.99996,404.99996,405.99996,406.99996,407.999959,408.999959,409.999959,410.999959,411.999959,412.999959,413.999959,414.999959,415.999959,416.999958,417.999958,418.999958,419.999958,420.999958,421.999958,422.999958,423.999958,424.999958,425.999958,426.999957];
+
+/**Changes every tenth of second to closest temperature value starting on the click of the Display Hotspots button
+ * For example, a click at 0.443 will only switch to the next one at .543
+ * Should make it run from beginning
+ */
+
+
+function CtoFMath(celsius)
+{
+  return celsius * 1.8 + 32;
+}
+
+
+function displayNumTemp(sensordata, sensor) {
+  //video_id = element.components["immersive-video"].video_id;
+  var vid = document.querySelector("#imvideo").components["immersive-video"]
+    .video;
+  //console.log("#imvideo:",vid);
+  
+  var valString = "#" + sensor + "val";
+  var val = document.querySelector(valString);
+
+    /** Waits every 1000 ms- recursive call- refresh rate
+   * If past the length of actual video, display "No more data"
+   * Otherwise, perform a binary search to find value in time array closest to vid.currenttime (could change it to have it wait until that mark is hit)
+   * and change the numerical temperature text display to that index of the temperature array*/
+
+  setTimeout(function() {
+    
+    //Replcaed with auto generated time array
+    //var timearr = maketimeArr(timeoffset, timeend, timeend-timeoffset+1);
+    
+    
+    //Call to timearr
+    if (vid.currentTime > time[time.length - 1]) {
+      var text = "N/A";
+      val.setAttribute("value", "N/A");
+    } else if (vid.currentTime < time[0]) {
+      var text = "N/A";
+      val.setAttribute("value", "N/A");
+    } else {
+      var text = sensordata[binarySearch(time, vid.currentTime, 0, time.length)] + " " + sensorUnit.get(sensor);
+      val.setAttribute("value",text);
+    }
+    if (sensor !== "hrr")
+    {
+      var shadowString = "#" + sensor + "shadowval";
+      var shadow = document.querySelector(shadowString);
+      shadow.setAttribute("value",text);
+    }
+    
+    displayNumTemp(sensordata, sensor);
+  }, 1000);
+}
+
+// function placeInSlot(theID, slotAB) {
+//   var el = document.querySelector(theID);
+//   el.setAttribute('visible', 'visible'); //make it visible
+//   el.setAttribute('position', slotAB);
+// }
+
+/**
+ * Changes the visibility of an element
+ */
+function toggleVisibility(tempID) {
+  var el = document.querySelector(tempID);
+  el.setAttribute("visible", !el.getAttribute("visible"));
+  // el.setAttribute('class',"hotspotGrabbable");
+}
+
+/**
+ * Binary search algorithm to find the only time value within a second of vid.currentTime
+ * Linear search would iterate 217.5 times on average before finding the solution
+ * Binary search finds the closest time in just 9 iterations (O log(n))
+ * Parameters- array to search, value to look for, and beginning/ending index for array (cuts down with each search)
+ */
+
+let binarySearch = function(arr, x, start, end) {
+  // Base Condtion- will never be true
+  if (start > end) {
+    return -1;
+  }
+
+  // Locates middle index
+  let mid = Math.floor((start + end) / 2);
+
+  // Compare mid with given key x
+  //if (arr[mid]===x) Traditional Binary Search
+  if (arr[mid] < x + 0.5 && arr[mid] > x - 0.5) {
+    //return true;
+    return mid;
+  }
+  // If element at mid is more than half of a second greater than x,
+  // search in the left half of mid in the array
+  if (arr[mid] > x + 0.5) {
+    return binarySearch(arr, x, start, mid - 1);
+  }
+  // If element at mid is smaller than half of a second less thanx,
+  // search in the right half of mid in the array
+  else {
+    return binarySearch(arr, x, mid + 1, end);
+  }
+};

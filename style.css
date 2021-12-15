@@ -1,0 +1,24 @@
+/* Style utilized for D3 Graph */
+
+/*
+body {
+ backgroundColor: transparent;
+}
+*/
+
+.axis line {
+  fill: none;
+  stroke-width: 4px;
+  stroke: white;
+  /*   shape-rendering: crispEdges; */
+}
+
+.x.axis path {
+  stroke-width: 4px;
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1px;
+}
